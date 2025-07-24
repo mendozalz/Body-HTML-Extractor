@@ -1,5 +1,7 @@
+// DEBUG: Verificar que el script se carga
+console.log('🔍 Body HTML Extractor - Content script cargado!', new Date().toISOString());
+
 // Variables globales
-let clickModeEnabled = false;
 let isInitialized = false;
 
 // Verificar si estamos en un contexto válido de extensión
@@ -14,111 +16,42 @@ function isExtensionContext() {
 function initializeExtension() {
     if (isInitialized) return;
     
-    // Verificar contexto antes de continuar
     if (!isExtensionContext()) {
-        console.warn('Body HTML Extractor: Contexto de extensión no válido, saltando inicialización');
+        console.warn('Body HTML Extractor: Contexto de extensión no válido');
         return;
     }
     
     isInitialized = true;
     console.log('Body HTML Extractor: Inicializando...');
     
-    // Verificar que chrome.storage esté disponible
-    if (chrome.storage && chrome.storage.local) {
-        try {
-            chrome.storage.local.get(['clickMode'], function(result) {
-                if (chrome.runtime.lastError) {
-                    console.warn('Error al cargar configuración:', chrome.runtime.lastError);
-                    clickModeEnabled = false;
-                } else {
-                    clickModeEnabled = result.clickMode || false;
-                    console.log('Modo click cargado:', clickModeEnabled);
-                    if (clickModeEnabled) {
-                        enableClickMode();
-                        showNotification('👆 Modo click ACTIVADO - Haz click en cualquier parte', 'success');
-                    } else {
-                        showNotification('🔍 Body HTML Extractor activado', 'info');
-                    }
-                }
-            });
-        } catch (error) {
-            console.warn('Error accediendo a chrome.storage:', error);
-            clickModeEnabled = false;
-            showNotification('🔍 Body HTML Extractor activado', 'info');
-        }
-    } else {
-        console.warn('chrome.storage no disponible, usando valores por defecto');
-        clickModeEnabled = false;
-        showNotification('🔍 Body HTML Extractor activado', 'info');
-    }
-    
     // Deshabilitar protecciones contra clic derecho
     disableRightClickProtection();
+    
+    // Mostrar notificación de inicialización
+    showNotification('🔍 Body HTML Extractor activado', 'info');
 }
 
-// Inicializar cuando el DOM esté listo - con verificación adicional
+// Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initializeExtension, 100); // Pequeño delay para asegurar contexto
+        setTimeout(initializeExtension, 100);
     });
 } else {
     setTimeout(initializeExtension, 100);
 }
 
-// Re-inicializar en cambios de página (para SPAs)
-let lastUrl = location.href;
-new MutationObserver(() => {
-    const url = location.href;
-    if (url !== lastUrl) {
-        lastUrl = url;
-        isInitialized = false;
-        setTimeout(initializeExtension, 1000);
-    }
-}).observe(document, {subtree: true, childList: true});
-
-// Escuchar mensajes del popup - solo si el contexto es válido
+// Escuchar mensajes del popup
 if (isExtensionContext() && chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        // Verificar contexto en cada mensaje
+        console.log('Content script - Mensaje recibido:', request);
+        
         if (!isExtensionContext()) {
-            console.warn('Contexto de extensión perdido');
+            console.error('Contexto de extensión perdido');
             sendResponse({success: false, error: 'Extension context lost'});
             return;
         }
         
-        console.log('Mensaje recibido:', request);
-        
-        if (request.action === 'getState') {
-            // Enviar el estado actual al popup
-            sendResponse({
-                success: true,
-                clickMode: clickModeEnabled,
-                isInitialized: isInitialized
-            });
-            
-        } else if (request.action === 'toggleClickMode') {
-            clickModeEnabled = request.enabled;
-            console.log('Cambiando modo click a:', clickModeEnabled);
-            
-            // Guardar estado si chrome.storage está disponible
-            if (chrome.storage && chrome.storage.local) {
-                try {
-                    chrome.storage.local.set({'clickMode': clickModeEnabled});
-                } catch (error) {
-                    console.warn('Error guardando configuración:', error);
-                }
-            }
-            
-            if (clickModeEnabled) {
-                enableClickMode();
-                showNotification('👆 Modo click ACTIVADO - Haz click en cualquier parte', 'success');
-            } else {
-                disableClickMode();
-                showNotification('❌ Modo click DESACTIVADO', 'info');
-            }
-            sendResponse({success: true});
-            
-        } else if (request.action === 'extractHTML') {
+        if (request.action === 'extractHTML') {
             console.log('Extrayendo HTML...');
             const result = extractBodyHTML();
             sendResponse({success: result});

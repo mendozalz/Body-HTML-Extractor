@@ -152,33 +152,24 @@
             }
         }
 
-        .status.error {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid rgba(244, 67, 54, 0.5);
-        }
-
-        .instructions {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            line-height: 1.4;
-            margin-top: 10px;
-            backdrop-filter: blur(10px);
-        }
-
         .extract-btn:active {
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        #author {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
+        .instructions {
+
             margin-top: 15px;
-            display: flex;
-            place-content: center;
+
+        }
+
+        .author {
+            text-align: center;
+            margin-top: 5px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: block;
         }
     </style>
 </head>
@@ -187,6 +178,7 @@
     <div class="header">
         <h1>🔍 Body HTML Extractor</h1>
 
+        <br />
         <div class="subtitle">Extrae el HTML completo del body</div>
     </div>
 
@@ -200,10 +192,9 @@
         <strong>Instrucciones:</strong><br>
         • <strong>Solo haz click en el botón de "Extraer HTML del Body" y se hará la magia</strong>
     </div>
-    <div id="author">
-        <a href="https://github.com/mendozalz" target="_blank" style="color: white; text-decoration: none;"><b>Lenin
-                Mendoza</b></a>
-        <br>
+    <div class="author">
+        <a href="https://github.com/mendozalz" target="_blank" style="color: white; text-decoration: none;">Autor:
+            <b>Lenin Mendoza</b></a>
     </div>
     <script src="popup.js"></script>
 </body>
